@@ -14,7 +14,7 @@ const duckList = document.getElementById("duck-nav");
 //making the form into a variable so I can put an eventListener on it
 const duckForm = document.getElementById("new-duck-form");
 
-let ducks;
+let currentDuck;
 //putting this in the global scope for later?
 
 //fetching duck data!
@@ -22,11 +22,11 @@ fetch(baseURL)
   .then((response) => response.json())
   .then((ducks) => {
     console.log(ducks);
-    ducks.forEach(renderDucks);
+    ducks.forEach(renderDuck);
   });
 //fetch request the ducks, get json from server response! sweet! it console.logs! now what?
 //for each duck you pull out of the json, plug it into renderDucks (make this next)
-function renderDucks(duck) {
+function renderDuck(duck) {
   let duckImage = document.createElement("img");
   //it has a problem with line 32 being undefined and I have no idea what it is
   duckImage.src = duck.img_url;
@@ -35,7 +35,6 @@ function renderDucks(duck) {
     showDuckDetails(duck);
   });
 }
-renderDucks();
 //aw yeah, I got the ducks in the nav! now what?
 //now to define showDuckDetails with the event listener in it?
 function showDuckDetails(duck) {
@@ -44,26 +43,34 @@ function showDuckDetails(duck) {
   let detailImage = document.getElementById("duck-display-image");
   let likesButton = document.getElementById("duck-display-likes");
   //omggg the three lets above needed to be ids from the html and not the json, finally caught that
-  detailName.textContent = duck.name;
-  detailImage.src = duck.img_url;
-  likesButton.innerText = duck.likes;
+  detailName.textContent = currentDuck.name;
+  detailImage.src = currentDuck.img_url;
+  likesButton.innerText = currentDuck.likes;
 
   //why is this part showing NaN on click?
   likesButton.addEventListener("click", (e) => {
     e.preventDefault();
     //on click, parseInt more likes to the base amount from the json
     //ok now why is line 56 not working??
-    const baseAmount = e.target["likes"];
-    currentDuck.likes += parseInt(baseAmount);
-    document.getElementById("duck-display-likes").textContent =
-      currentDuck.likes;
+    currentDuck.likes += 1;
+    likesButton.textContent = currentDuck.likes;
+
+    fetch(`${baseURL}/${duck.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ likes: currentDuck.likes }),
+    })
+      .then((response) => response.json())
+      .then(renderDuck);
   });
 }
-showDuckDetails();
 
 duckForm.addEventListener("submit", (e) => {
   e.preventDefault();
   let currentDuck = duck;
+
   //start declaring new lets with their element ids?
   //  newDetailName.textContent= however you say form submission
 
@@ -75,6 +82,7 @@ duckForm.addEventListener("submit", (e) => {
   e.target.reset();
 });
 
+//have a default duck start the array
 //stretch deliverable, patch new ducks back to the server
 //could this be part of the big event listener?
 //how do I write this? idek. I think body is involved? stringify it back intoJSON?
